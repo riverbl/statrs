@@ -20,7 +20,7 @@ use std::f64;
 /// assert_eq!(n.pmf(1), 0.3);
 /// assert_eq!(n.pmf(2), 0.21);
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Geometric {
     p: f64,
 }
@@ -65,6 +65,12 @@ impl Geometric {
     /// ```
     pub fn p(&self) -> f64 {
         self.p
+    }
+}
+
+impl std::fmt::Display for Geometric {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Geom({})", self.p)
     }
 }
 
@@ -159,6 +165,7 @@ impl Distribution<f64> for Geometric {
     fn mean(&self) -> Option<f64> {
         Some(1.0 / self.p)
     }
+
     /// Returns the standard deviation of the geometric distribution
     ///
     /// # Formula
@@ -169,6 +176,7 @@ impl Distribution<f64> for Geometric {
     fn variance(&self) -> Option<f64> {
         Some((1.0 - self.p) / (self.p * self.p))
     }
+
     /// Returns the entropy of the geometric distribution
     ///
     /// # Formula
@@ -180,6 +188,7 @@ impl Distribution<f64> for Geometric {
         let inv = 1.0 / self.p;
         Some(-inv * (1. - self.p).log(2.0) + (inv - 1.).log(2.0))
     }
+
     /// Returns the skewness of the geometric distribution
     ///
     /// # Formula
@@ -262,13 +271,12 @@ impl Discrete<u64, f64> for Geometric {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
     use crate::distribution::{DiscreteCDF, Discrete, Geometric};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(p: f64) -> Geometric {
         let n = Geometric::new(p);

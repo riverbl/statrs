@@ -20,7 +20,7 @@ use rand::Rng;
 /// assert_eq!(n.mean().unwrap(), 3.0);
 /// assert!(prec::almost_eq(n.pdf(2.0), 0.270670566473225383788, 1e-15));
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Erlang {
     g: Gamma,
 }
@@ -75,6 +75,12 @@ impl Erlang {
     /// ```
     pub fn rate(&self) -> f64 {
         self.g.rate()
+    }
+}
+
+impl std::fmt::Display for Erlang {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "E({}, {})", self.rate(), self.shape())
     }
 }
 
@@ -166,6 +172,7 @@ impl Distribution<f64> for Erlang {
     fn mean(&self) -> Option<f64> {
         self.g.mean()
     }
+
     /// Returns the variance of the erlang distribution
     ///
     /// # Formula
@@ -178,6 +185,7 @@ impl Distribution<f64> for Erlang {
     fn variance(&self) -> Option<f64> {
         self.g.variance()
     }
+
     /// Returns the entropy of the erlang distribution
     ///
     /// # Formula
@@ -191,6 +199,7 @@ impl Distribution<f64> for Erlang {
     fn entropy(&self) -> Option<f64> {
         self.g.entropy()
     }
+
     /// Returns the skewness of the erlang distribution
     ///
     /// # Formula
@@ -267,11 +276,10 @@ impl Continuous<f64, f64> for Erlang {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use crate::distribution::Erlang;
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(shape: u64, rate: f64) -> Erlang {
         let n = Erlang::new(shape, rate);

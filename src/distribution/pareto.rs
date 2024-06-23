@@ -19,7 +19,7 @@ use std::f64;
 /// assert_eq!(p.mean().unwrap(), 2.0);
 /// assert!(prec::almost_eq(p.pdf(2.0), 0.25, 1e-15));
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Pareto {
     scale: f64,
     shape: f64,
@@ -80,6 +80,12 @@ impl Pareto {
     /// ```
     pub fn shape(&self) -> f64 {
         self.shape
+    }
+}
+
+impl std::fmt::Display for Pareto {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Pareto({},{})", self.scale, self.shape)
     }
 }
 
@@ -188,6 +194,7 @@ impl Distribution<f64> for Pareto {
             Some((self.shape * self.scale) / (self.shape - 1.0))
         }
     }
+
     /// Returns the variance of the Pareto distribution
     ///
     /// # Formula
@@ -209,6 +216,7 @@ impl Distribution<f64> for Pareto {
             Some(a * a * self.shape / (self.shape - 2.0))
         }
     }
+
     /// Returns the entropy for the Pareto distribution
     ///
     /// # Formula
@@ -221,6 +229,7 @@ impl Distribution<f64> for Pareto {
     fn entropy(&self) -> Option<f64> {
         Some(self.shape.ln() - self.scale.ln() - (1.0 / self.shape) - 1.0)
     }
+
     /// Returns the skewness of the Pareto distribution
     ///
     /// # Panics
@@ -325,12 +334,11 @@ impl Continuous<f64, f64> for Pareto {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use crate::statistics::*;
     use crate::distribution::{ContinuousCDF, Continuous, Pareto};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(scale: f64, shape: f64) -> Pareto {
         let p = Pareto::new(scale, shape);

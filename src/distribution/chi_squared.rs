@@ -21,7 +21,7 @@ use std::f64;
 /// assert_eq!(n.mean().unwrap(), 3.0);
 /// assert!(prec::almost_eq(n.pdf(4.0), 0.107981933026376103901, 1e-15));
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct ChiSquared {
     freedom: f64,
     g: Gamma,
@@ -93,6 +93,12 @@ impl ChiSquared {
     /// ```
     pub fn rate(&self) -> f64 {
         self.g.rate()
+    }
+}
+
+impl std::fmt::Display for ChiSquared {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "χ^2_{}", self.freedom)
     }
 }
 
@@ -177,6 +183,7 @@ impl Distribution<f64> for ChiSquared {
     fn mean(&self) -> Option<f64> {
         self.g.mean()
     }
+
     /// Returns the variance of the chi-squared distribution
     ///
     /// # Formula
@@ -189,6 +196,7 @@ impl Distribution<f64> for ChiSquared {
     fn variance(&self) -> Option<f64> {
         self.g.variance()
     }
+
     /// Returns the entropy of the chi-squared distribution
     ///
     /// # Formula
@@ -202,6 +210,7 @@ impl Distribution<f64> for ChiSquared {
     fn entropy(&self) -> Option<f64> {
         self.g.entropy()
     }
+
     /// Returns the skewness of the chi-squared distribution
     ///
     /// # Formula
@@ -280,12 +289,11 @@ impl Continuous<f64, f64> for ChiSquared {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use crate::statistics::Median;
     use crate::distribution::ChiSquared;
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(freedom: f64) -> ChiSquared {
         let n = ChiSquared::new(freedom);

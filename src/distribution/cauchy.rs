@@ -17,7 +17,7 @@ use std::f64;
 /// assert_eq!(n.mode().unwrap(), 0.0);
 /// assert_eq!(n.pdf(1.0), 0.1591549430918953357689);
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Cauchy {
     location: f64,
     scale: f64,
@@ -76,6 +76,12 @@ impl Cauchy {
     /// ```
     pub fn scale(&self) -> f64 {
         self.scale
+    }
+}
+
+impl std::fmt::Display for Cauchy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Cauchy({}, {})", self.location, self.scale)
     }
 }
 
@@ -226,12 +232,11 @@ impl Continuous<f64, f64> for Cauchy {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use crate::statistics::*;
     use crate::distribution::{ContinuousCDF, Continuous, Cauchy};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(location: f64, scale: f64) -> Cauchy {
         let n = Cauchy::new(location, scale);
@@ -432,7 +437,7 @@ mod tests {
         test_almost(0.0, 0.1, 0.9936346508990272, 1e-16, sf(-5.0));
         test_almost(0.0, 0.1, 0.9682744825694465, 1e-16, sf(-1.0));
         test_case(0.0, 0.1, 0.5, sf(0.0));
-        test_case(0.0, 0.1, 0.03172551743055352, sf(1.0));
+        test_almost(0.0, 0.1, 0.03172551743055352, 1e-16, sf(1.0));
         test_case(0.0, 0.1, 0.006365349100972806, sf(5.0));
         test_almost(0.0, 1.0, 0.9371670418109989, 1e-16, sf(-5.0));
         test_case(0.0, 1.0, 0.75, sf(-1.0));

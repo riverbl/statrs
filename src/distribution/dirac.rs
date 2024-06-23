@@ -45,6 +45,12 @@ impl Dirac {
     }
 }
 
+impl std::fmt::Display for Dirac {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "δ_{}", self.0)
+    }
+}
+
 impl ::rand::distributions::Distribution<f64> for Dirac {
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
         self.0
@@ -56,7 +62,6 @@ impl ContinuousCDF<f64, f64> for Dirac {
     /// dirac distribution at `x`
     ///
     /// Where the value is 1 if x > `v`, 0 otherwise.
-    ///
     fn cdf(&self, x: f64) -> f64 {
         if x < self.0 {
             0.0
@@ -69,7 +74,6 @@ impl ContinuousCDF<f64, f64> for Dirac {
     /// dirac distribution at `x`
     ///
     /// Where the value is 0 if x > `v`, 1 otherwise.
-    ///
     fn sf(&self, x: f64) -> f64 {
         if x < self.0 {
             1.0
@@ -117,6 +121,7 @@ impl Distribution<f64> for Dirac {
     fn mean(&self) -> Option<f64> {
         Some(self.0)
     }
+
     /// Returns the variance of the dirac distribution
     ///
     /// # Formula
@@ -129,6 +134,7 @@ impl Distribution<f64> for Dirac {
     fn variance(&self) -> Option<f64> {
         Some(0.0)
     }
+
     /// Returns the entropy of the dirac distribution
     ///
     /// # Formula
@@ -141,6 +147,7 @@ impl Distribution<f64> for Dirac {
     fn entropy(&self) -> Option<f64> {
         Some(0.0)
     }
+
     /// Returns the skewness of the dirac distribution
     ///
     /// # Formula
@@ -184,11 +191,10 @@ impl Mode<Option<f64>> for Dirac {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use crate::statistics::*;
     use crate::distribution::{ContinuousCDF, Continuous, Dirac};
-    use crate::consts::ACC;
 
     fn try_create(v: f64) -> Dirac {
         let d = Dirac::new(v);

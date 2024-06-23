@@ -19,7 +19,7 @@ use std::f64;
 /// assert!(prec::almost_eq(n.mean().unwrap(), 1.25331413731550025121, 1e-14));
 /// assert!(prec::almost_eq(n.pdf(1.0), 0.60653065971263342360, 1e-15));
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Chi {
     freedom: f64,
 }
@@ -65,6 +65,12 @@ impl Chi {
     /// ```
     pub fn freedom(&self) -> f64 {
         self.freedom
+    }
+}
+
+impl std::fmt::Display for Chi {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "χ_{}", self.freedom)
     }
 }
 
@@ -185,6 +191,7 @@ impl Distribution<f64> for Chi {
             Some(mean)
         }
     }
+
     /// Returns the variance of the chi distribution
     ///
     /// # Remarks
@@ -203,6 +210,7 @@ impl Distribution<f64> for Chi {
         let mean = self.mean()?;
         Some(self.freedom - mean * mean)
     }
+
     /// Returns the entropy of the chi distribution
     ///
     /// # Remarks
@@ -228,6 +236,7 @@ impl Distribution<f64> for Chi {
                 / 2.0;
         Some(entr)
     }
+
     /// Returns the skewness of the chi distribution
     ///
     /// # Remarks
@@ -314,13 +323,12 @@ impl Continuous<f64, f64> for Chi {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use std::f64;
     use crate::distribution::internal::*;
     use crate::distribution::{Chi, Continuous, ContinuousCDF};
     use crate::statistics::*;
-    use crate::consts::ACC;
 
     fn try_create(freedom: f64) -> Chi {
         let n = Chi::new(freedom);

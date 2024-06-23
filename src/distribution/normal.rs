@@ -18,7 +18,7 @@ use std::f64;
 /// assert_eq!(n.mean().unwrap(), 0.0);
 /// assert_eq!(n.pdf(1.0), 0.2419707245191433497978);
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Normal {
     mean: f64,
     std_dev: f64,
@@ -50,6 +50,30 @@ impl Normal {
         } else {
             Ok(Normal { mean, std_dev })
         }
+    }
+
+    /// Constructs a new standard normal distribution with a mean of 0
+    /// and a standard deviation of 1.
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use statrs::distribution::Normal;
+    ///
+    /// let mut result = Normal::standard();
+    /// ```
+    pub fn standard() -> Normal {
+        Normal {
+            mean: 0.0,
+            std_dev: 1.0,
+        }
+    }
+}
+
+impl std::fmt::Display for Normal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "N({},{})", self.mean, self.std_dev)
     }
 }
 
@@ -100,7 +124,8 @@ impl ContinuousCDF<f64, f64> for Normal {
     }
 
     /// Calculates the inverse cumulative distribution function for the
-    /// normal distribution at `x`
+    /// normal distribution at `x`.
+    /// In other languages, such as R, this is known as the the quantile function.
     ///
     /// # Panics
     ///
@@ -160,6 +185,7 @@ impl Distribution<f64> for Normal {
     fn mean(&self) -> Option<f64> {
         Some(self.mean)
     }
+
     /// Returns the variance of the normal distribution
     ///
     /// # Formula
@@ -172,6 +198,14 @@ impl Distribution<f64> for Normal {
     fn variance(&self) -> Option<f64> {
         Some(self.std_dev * self.std_dev)
     }
+
+    /// Returns the standard deviation of the normal distribution
+    /// # Remarks
+    /// This is the same standard deviation used to construct the distribution
+    fn std_dev(&self) -> Option<f64> {
+        Some(self.std_dev)
+    }
+
     /// Returns the entropy of the normal distribution
     ///
     /// # Formula
@@ -184,6 +218,7 @@ impl Distribution<f64> for Normal {
     fn entropy(&self) -> Option<f64> {
         Some(self.std_dev.ln() + consts::LN_SQRT_2PIE)
     }
+
     /// Returns the skewness of the normal distribution
     ///
     /// # Formula
@@ -288,13 +323,20 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, mean: f64, std_dev: f64) -
     mean + std_dev * ziggurat::sample_std_normal(rng)
 }
 
+impl std::default::Default for Normal {
+    /// Returns the standard normal distribution with a mean of 0
+    /// and a standard deviation of 1.
+    fn default() -> Self {
+        Self::standard()
+    }
+}
+
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use crate::statistics::*;
     use crate::distribution::{ContinuousCDF, Continuous, Normal};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(mean: f64, std_dev: f64) -> Normal {
         let n = Normal::new(mean, std_dev);
@@ -507,5 +549,18 @@ mod tests {
         test_almost(5.0, 2.0, 6.0, 1e-14, inverse_cdf(0.69146246127401310363770461060833773988360217555457859));
         test_almost(5.0, 2.0, 10.0, 1e-14, inverse_cdf(0.9937903346742238648330218954258077788721022530769078));
         test_case(5.0, 2.0, f64::INFINITY, inverse_cdf(1.0));
+    }
+
+    #[test]
+    fn test_default() {
+        let n = Normal::default();
+
+        let n_mean = n.mean().unwrap();
+        let n_std  = n.std_dev().unwrap();
+
+        // Check that the mean of the distribution is close to 0
+        assert_almost_eq!(n_mean, 0.0, 1e-15);
+        // Check that the standard deviation of the distribution is close to 1
+        assert_almost_eq!(n_std, 1.0, 1e-15);
     }
 }

@@ -21,7 +21,7 @@ use std::f64;
 /// 0.95135076986687318362924871772654021925505786260884, 1e-15));
 /// assert_eq!(n.pdf(1.0), 3.6787944117144232159552377016146086744581113103177);
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Weibull {
     shape: f64,
     scale: f64,
@@ -87,6 +87,12 @@ impl Weibull {
     /// ```
     pub fn scale(&self) -> f64 {
         self.scale
+    }
+}
+
+impl std::fmt::Display for Weibull {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Weibull({},{})", self.scale, self.shape)
     }
 }
 
@@ -177,6 +183,7 @@ impl Distribution<f64> for Weibull {
     fn mean(&self) -> Option<f64> {
         Some(self.scale * gamma::gamma(1.0 + 1.0 / self.shape))
     }
+
     /// Returns the variance of the weibull distribution
     ///
     /// # Formula
@@ -191,6 +198,7 @@ impl Distribution<f64> for Weibull {
         let mean = self.mean()?;
         Some(self.scale * self.scale * gamma::gamma(1.0 + 2.0 / self.shape) - mean * mean)
     }
+
     /// Returns the entropy of the weibull distribution
     ///
     /// # Formula
@@ -207,6 +215,7 @@ impl Distribution<f64> for Weibull {
             + 1.0;
         Some(entr)
     }
+
     /// Returns the skewness of the weibull distribution
     ///
     /// # Formula
@@ -322,12 +331,11 @@ impl Continuous<f64, f64> for Weibull {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use crate::statistics::*;
     use crate::distribution::{ContinuousCDF, Continuous, Weibull};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(shape: f64, scale: f64) -> Weibull {
         let n = Weibull::new(shape, scale);

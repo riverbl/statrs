@@ -6,20 +6,20 @@ use core::cmp::Ordering;
 use rand::Rng;
 use std::collections::BTreeMap;
 
-#[derive(Clone, Debug, PartialEq)]
-struct NonNAN<T>(T);
+#[derive(Clone, PartialEq, Debug)]
+struct NonNan<T>(T);
 
-impl<T: PartialEq> Eq for NonNAN<T> {}
+impl<T: PartialEq> Eq for NonNan<T> {}
 
-impl<T: PartialOrd> PartialOrd for NonNAN<T> {
+impl<T: PartialOrd> PartialOrd for NonNan<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.0.partial_cmp(&other.0)
+        Some(self.cmp(other))
     }
 }
 
-impl<T: PartialOrd> Ord for NonNAN<T> {
+impl<T: PartialOrd> Ord for NonNan<T> {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap()
+        self.0.partial_cmp(&other.0).unwrap()
     }
 }
 
@@ -37,12 +37,12 @@ impl<T: PartialOrd> Ord for NonNAN<T> {
 /// let empirical = Empirical::from_vec(samples);
 /// assert_eq!(empirical.mean().unwrap(), 5.0);
 /// ```
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Empirical {
     sum: f64,
     mean_and_var: Option<(f64, f64)>,
     // keys are data points, values are number of data points with equal value
-    data: BTreeMap<NonNAN<f64>, u64>,
+    data: BTreeMap<NonNan<f64>, u64>,
 }
 
 impl Empirical {
@@ -56,7 +56,6 @@ impl Empirical {
     ///
     /// let mut result = Empirical::new();
     /// assert!(result.is_ok());
-    ///
     /// ```
     pub fn new() -> Result<Empirical> {
         Ok(Empirical {
@@ -65,6 +64,7 @@ impl Empirical {
             data: BTreeMap::new(),
         })
     }
+
     pub fn from_vec(src: Vec<f64>) -> Empirical {
         let mut empirical = Empirical::new().unwrap();
         for elt in src.into_iter() {
@@ -72,6 +72,7 @@ impl Empirical {
         }
         empirical
     }
+
     pub fn add(&mut self, data_point: f64) {
         if !data_point.is_nan() {
             self.sum += 1.;
@@ -86,13 +87,14 @@ impl Empirical {
                     self.mean_and_var = Some((data_point, 0.));
                 }
             }
-            *self.data.entry(NonNAN(data_point)).or_insert(0) += 1;
+            *self.data.entry(NonNan(data_point)).or_insert(0) += 1;
         }
     }
+
     pub fn remove(&mut self, data_point: f64) {
         if !data_point.is_nan() {
             if let (Some(val), Some((mean, var))) =
-                (self.data.remove(&NonNAN(data_point)), self.mean_and_var)
+                (self.data.remove(&NonNan(data_point)), self.mean_and_var)
             {
                 if val == 1 && self.data.is_empty() {
                     self.mean_and_var = None;
@@ -105,12 +107,13 @@ impl Empirical {
                     var - (self.sum - 1.) * (data_point - mean) * (data_point - mean) / self.sum;
                 self.sum -= 1.;
                 if val != 1 {
-                    self.data.insert(NonNAN(data_point), val - 1);
+                    self.data.insert(NonNan(data_point), val - 1);
                 };
                 self.mean_and_var = Some((mean, var));
             }
         }
     }
+
     // Due to issues with rounding and floating-point accuracy the default
     // implementation may be ill-behaved.
     // Specialized inverse cdfs should be used whenever possible.
@@ -148,6 +151,30 @@ impl Empirical {
     }
 }
 
+impl std::fmt::Display for Empirical {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some((&NonNan(x), _)) = self.data.first_key_value() {
+            write!(f, "Empirical([{:.3e}", x)?;
+        } else {
+            return write!(f, "Empirical(∅)");
+        }
+
+        let mut enumerated_values = self
+            .data
+            .iter()
+            .flat_map(|(&NonNan(x), &count)| std::iter::repeat(x).take(count as usize))
+            .skip(1);
+
+        for val in enumerated_values.by_ref().take(4) {
+            write!(f, ", {:.3e}", val)?;
+        }
+        if enumerated_values.next().is_some() {
+            write!(f, ", ...")?;
+        }
+        write!(f, "])")
+    }
+}
+
 impl ::rand::distributions::Distribution<f64> for Empirical {
     fn sample<R: ?Sized + Rng>(&self, rng: &mut R) -> f64 {
         let uniform = Uniform::new(0.0, 1.0).unwrap();
@@ -158,7 +185,7 @@ impl ::rand::distributions::Distribution<f64> for Empirical {
 /// Panics if number of samples is zero
 impl Max<f64> for Empirical {
     fn max(&self) -> f64 {
-        self.data.keys().rev().map(|key| key.0) .next().unwrap()
+        self.data.keys().rev().map(|key| key.0).next().unwrap()
     }
 }
 
@@ -173,6 +200,7 @@ impl Distribution<f64> for Empirical {
     fn mean(&self) -> Option<f64> {
         self.mean_and_var.map(|(mean, _)| mean)
     }
+
     fn variance(&self) -> Option<f64> {
         self.mean_and_var.map(|(_, var)| var / (self.sum - 1.))
     }
@@ -200,9 +228,13 @@ impl ContinuousCDF<f64, f64> for Empirical {
         }
         sum as f64 / self.sum
     }
+
+    fn inverse_cdf(&self, p: f64) -> f64 {
+        self.__inverse_cdf(p)
+    }
 }
 
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]
@@ -256,8 +288,35 @@ mod tests {
         let unchanged = empirical.clone();
         empirical.add(2.0);
         empirical.remove(2.0);
-         //because of rounding errors, this doesn't hold in general
-         //due to the mean and variance being calculated in a streaming way
+        // because of rounding errors, this doesn't hold in general
+        // due to the mean and variance being calculated in a streaming way
         assert_eq!(unchanged, empirical);
+    }
+
+    #[test]
+    fn test_display() {
+        let mut e = Empirical::new().unwrap();
+        assert_eq!(e.to_string(), "Empirical(∅)");
+        e.add(1.0);
+        assert_eq!(e.to_string(), "Empirical([1.000e0])");
+        e.add(1.0);
+        assert_eq!(e.to_string(), "Empirical([1.000e0, 1.000e0])");
+        e.add(2.0);
+        assert_eq!(e.to_string(), "Empirical([1.000e0, 1.000e0, 2.000e0])");
+        e.add(2.0);
+        assert_eq!(
+            e.to_string(),
+            "Empirical([1.000e0, 1.000e0, 2.000e0, 2.000e0])"
+        );
+        e.add(5.0);
+        assert_eq!(
+            e.to_string(),
+            "Empirical([1.000e0, 1.000e0, 2.000e0, 2.000e0, 5.000e0])"
+        );
+        e.add(5.0);
+        assert_eq!(
+            e.to_string(),
+            "Empirical([1.000e0, 1.000e0, 2.000e0, 2.000e0, 5.000e0, ...])"
+        );
     }
 }

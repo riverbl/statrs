@@ -18,7 +18,7 @@ use std::f64;
 /// assert_eq!(n.mean().unwrap(), 7.5 / 3.0);
 /// assert_eq!(n.pdf(2.5), 5.0 / 12.5);
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Triangular {
     min: f64,
     max: f64,
@@ -56,6 +56,12 @@ impl Triangular {
             return Err(StatsError::BadParams);
         }
         Ok(Triangular { min, max, mode })
+    }
+}
+
+impl std::fmt::Display for Triangular {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Triangular([{},{}], {})", self.min, self.max, self.mode)
     }
 }
 
@@ -165,6 +171,7 @@ impl Distribution<f64> for Triangular {
     fn mean(&self) -> Option<f64> {
         Some((self.min + self.max + self.mode) / 3.0)
     }
+
     /// Returns the variance of the triangular distribution
     ///
     /// # Formula
@@ -178,6 +185,7 @@ impl Distribution<f64> for Triangular {
         let c = self.mode;
         Some((a * a + b * b + c * c - a * b - a * c - b * c) / 18.0)
     }
+
     /// Returns the entropy of the triangular distribution
     ///
     /// # Formula
@@ -188,6 +196,7 @@ impl Distribution<f64> for Triangular {
     fn entropy(&self) -> Option<f64> {
         Some(0.5 + ((self.max - self.min) / 2.0).ln())
     }
+
     /// Returns the skewness of the triangular distribution
     ///
     /// # Formula
@@ -308,13 +317,12 @@ fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, min: f64, max: f64, mode: f64)
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
     use crate::distribution::{ContinuousCDF, Continuous, Triangular};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(min: f64, max: f64, mode: f64) -> Triangular {
         let n = Triangular::new(min, max, mode);

@@ -20,7 +20,7 @@ use std::f64;
 /// assert!(prec::almost_eq(n.mean().unwrap(), 1.0, 1e-14));
 /// assert_eq!(n.pdf(1.0), 0.07554920138253064);
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct InverseGamma {
     shape: f64,
     rate: f64,
@@ -84,6 +84,12 @@ impl InverseGamma {
     /// ```
     pub fn rate(&self) -> f64 {
         self.rate
+    }
+}
+
+impl std::fmt::Display for InverseGamma {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Inv-Gamma({}, {})", self.shape, self.rate)
     }
 }
 
@@ -190,6 +196,7 @@ impl Distribution<f64> for InverseGamma {
             Some(self.rate / (self.shape - 1.0))
         }
     }
+
     /// Returns the variance of the inverse gamma distribution
     ///
     /// # None
@@ -212,6 +219,7 @@ impl Distribution<f64> for InverseGamma {
             Some(val)
         }
     }
+
     /// Returns the entropy of the inverse gamma distribution
     ///
     /// # Formula
@@ -227,6 +235,7 @@ impl Distribution<f64> for InverseGamma {
             - (1.0 + self.shape) * gamma::digamma(self.shape);
         Some(entr)
     }
+
     /// Returns the skewness of the inverse gamma distribution
     ///
     /// # None
@@ -302,12 +311,11 @@ impl Continuous<f64, f64> for InverseGamma {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use crate::statistics::*;
     use crate::distribution::{ContinuousCDF, Continuous, InverseGamma};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(shape: f64, rate: f64) -> InverseGamma {
         let n = InverseGamma::new(shape, rate);

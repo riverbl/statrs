@@ -26,7 +26,7 @@ use std::f64;
 /// assert_eq!(n.mean().unwrap(), DVector::from_vec(vec![1.0 / 6.0, 1.0 / 3.0, 0.5]));
 /// assert_eq!(n.pdf(&DVector::from_vec(vec![0.33333, 0.33333, 0.33333])), 2.222155556222205);
 /// ```
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Dirichlet {
     alpha: DVector<f64>,
 }
@@ -107,6 +107,7 @@ impl Dirichlet {
     fn alpha_sum(&self) -> f64 {
         self.alpha.fold(0.0, |acc, x| acc + x)
     }
+
     /// Returns the entropy of the dirichlet distribution
     ///
     /// # Formula
@@ -133,6 +134,12 @@ impl Dirichlet {
         let entr =
             -gamma::ln_gamma(sum) + (sum - self.alpha.len() as f64) * gamma::digamma(sum) - num;
         Some(entr)
+    }
+}
+
+impl std::fmt::Display for Dirichlet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Dir({}, {})", self.alpha.len(), &self.alpha)
     }
 }
 
@@ -300,14 +307,13 @@ fn is_valid_alpha(a: &[f64]) -> bool {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use super::*;
     use nalgebra::{DVector};
     use crate::function::gamma;
     use crate::statistics::*;
     use crate::distribution::{Continuous, Dirichlet};
-    use crate::consts::ACC;
 
     #[test]
     fn test_is_valid_alpha() {

@@ -89,6 +89,12 @@ impl FisherSnedecor {
     }
 }
 
+impl std::fmt::Display for FisherSnedecor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "F({},{})", self.freedom_1, self.freedom_2)
+    }
+}
+
 impl ::rand::distributions::Distribution<f64> for FisherSnedecor {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         (super::gamma::sample_unchecked(rng, self.freedom_1 / 2.0, 0.5) * self.freedom_2)
@@ -144,8 +150,8 @@ impl ContinuousCDF<f64, f64> for FisherSnedecor {
         } else {
             beta::beta_reg(
                 self.freedom_2 / 2.0,
-                self.freedom_1 / 2.0, 
-                1. - ((self.freedom_1 * x) / (self.freedom_1 * x + self.freedom_2))
+                self.freedom_1 / 2.0,
+                1. - ((self.freedom_1 * x) / (self.freedom_1 * x + self.freedom_2)),
             )
         }
     }
@@ -206,6 +212,7 @@ impl Distribution<f64> for FisherSnedecor {
             Some(self.freedom_2 / (self.freedom_2 - 2.0))
         }
     }
+
     /// Returns the variance of the fisher-snedecor distribution
     ///
     /// # Panics
@@ -237,6 +244,7 @@ impl Distribution<f64> for FisherSnedecor {
             Some(val)
         }
     }
+
     /// Returns the skewness of the fisher-snedecor distribution
     ///
     /// # Panics
@@ -353,12 +361,11 @@ impl Continuous<f64, f64> for FisherSnedecor {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use crate::statistics::*;
     use crate::distribution::{ContinuousCDF, Continuous, FisherSnedecor};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(freedom_1: f64, freedom_2: f64) -> FisherSnedecor {
         let n = FisherSnedecor::new(freedom_1, freedom_2);

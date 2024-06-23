@@ -21,7 +21,7 @@ use std::f64;
 /// assert_eq!(n.pmf(0), 0.03125);
 /// assert_eq!(n.pmf(3), 0.3125);
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Binomial {
     p: f64,
     n: u64,
@@ -84,6 +84,12 @@ impl Binomial {
     /// ```
     pub fn n(&self) -> u64 {
         self.n
+    }
+}
+
+impl std::fmt::Display for Binomial {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Bin({},{})", self.p, self.n)
     }
 }
 
@@ -181,6 +187,7 @@ impl Distribution<f64> for Binomial {
     fn mean(&self) -> Option<f64> {
         Some(self.p * self.n as f64)
     }
+
     /// Returns the variance of the binomial distribution
     ///
     /// # Formula
@@ -191,6 +198,7 @@ impl Distribution<f64> for Binomial {
     fn variance(&self) -> Option<f64> {
         Some(self.p * (1.0 - self.p) * self.n as f64)
     }
+
     /// Returns the entropy of the binomial distribution
     ///
     /// # Formula
@@ -209,6 +217,7 @@ impl Distribution<f64> for Binomial {
         };
         Some(entr)
     }
+
     /// Returns the skewness of the binomial distribution
     ///
     /// # Formula
@@ -318,13 +327,12 @@ impl Discrete<u64, f64> for Binomial {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
     use crate::distribution::{DiscreteCDF, Discrete, Binomial};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(p: f64, n: u64) -> Binomial {
         let n = Binomial::new(p, n);
@@ -563,6 +571,24 @@ mod tests {
     fn test_sf_upper_bound() {
         let sf = |arg: u64| move |x: Binomial| x.sf(arg);
         test_case(0.5, 3, 0.0, sf(5));
+    }
+
+    #[test]
+    fn test_inverse_cdf() {
+        let invcdf = |arg: f64| move |x: Binomial| x.inverse_cdf(arg);
+        test_case(0.4, 5, 2, invcdf(0.3456));
+
+        // cases in issue #185
+        test_case(0.018, 465, 1, invcdf(3.472e-4));
+        test_case(0.5, 6, 4, invcdf(0.75));
+    }
+
+    #[test]
+    fn test_cdf_inverse_cdf() {
+        let cdf_invcdf = |arg: u64| move |x: Binomial| x.inverse_cdf(x.cdf(arg));
+        test_case(0.3, 10, 3, cdf_invcdf(3));
+        test_case(0.3, 10, 4, cdf_invcdf(4));
+        test_case(0.5, 6, 4, cdf_invcdf(4));
     }
 
     #[test]

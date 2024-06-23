@@ -20,7 +20,7 @@ use std::f64;
 /// assert_eq!(n.mean().unwrap(), 1.0);
 /// assert_eq!(n.pdf(1.0), 0.3678794411714423215955);
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Exp {
     rate: f64,
 }
@@ -67,6 +67,12 @@ impl Exp {
     }
 }
 
+impl std::fmt::Display for Exp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Exp({})", self.rate)
+    }
+}
+
 impl ::rand::distributions::Distribution<f64> for Exp {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         ziggurat::sample_exp_1(r) / self.rate
@@ -108,6 +114,19 @@ impl ContinuousCDF<f64, f64> for Exp {
         } else {
             (-self.rate * x).exp()
         }
+    }
+
+    /// Calculates the inverse cumulative distribution function.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// -ln(1 - p) / λ
+    /// ```
+    ///
+    /// where `p` is the probability and `λ` is the rate
+    fn inverse_cdf(&self, p: f64) -> f64 {
+        -(-p).ln_1p() / self.rate
     }
 }
 
@@ -152,6 +171,7 @@ impl Distribution<f64> for Exp {
     fn mean(&self) -> Option<f64> {
         Some(1.0 / self.rate)
     }
+
     /// Returns the variance of the exponential distribution
     ///
     /// # Formula
@@ -164,6 +184,7 @@ impl Distribution<f64> for Exp {
     fn variance(&self) -> Option<f64> {
         Some(1.0 / (self.rate * self.rate))
     }
+
     /// Returns the entropy of the exponential distribution
     ///
     /// # Formula
@@ -176,6 +197,7 @@ impl Distribution<f64> for Exp {
     fn entropy(&self) -> Option<f64> {
         Some(1.0 - self.rate.ln())
     }
+
     /// Returns the skewness of the exponential distribution
     ///
     /// # Formula
@@ -255,13 +277,12 @@ impl Continuous<f64, f64> for Exp {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use std::f64;
     use crate::statistics::*;
     use crate::distribution::{ContinuousCDF, Continuous, Exp};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(rate: f64) -> Exp {
         let n = Exp::new(rate);
@@ -455,6 +476,27 @@ mod tests {
         test_case(1.0, 1.0, cdf(f64::INFINITY));
         test_case(10.0, 1.0, cdf(f64::INFINITY));
         test_case(f64::INFINITY, 1.0, cdf(f64::INFINITY));
+    }
+
+    #[test]
+    fn test_inverse_cdf() {
+        let distribution = Exp::new(0.42).unwrap();
+        assert_eq!(distribution.median(), distribution.inverse_cdf(0.5));
+
+        let distribution = Exp::new(0.042).unwrap();
+        assert_eq!(distribution.median(), distribution.inverse_cdf(0.5));
+
+        let distribution = Exp::new(0.0042).unwrap();
+        assert_eq!(distribution.median(), distribution.inverse_cdf(0.5));
+
+        let distribution = Exp::new(0.33).unwrap();
+        assert_eq!(distribution.median(), distribution.inverse_cdf(0.5));
+
+        let distribution = Exp::new(0.033).unwrap();
+        assert_eq!(distribution.median(), distribution.inverse_cdf(0.5));
+
+        let distribution = Exp::new(0.0033).unwrap();
+        assert_eq!(distribution.median(), distribution.inverse_cdf(0.5));
     }
 
     #[test]

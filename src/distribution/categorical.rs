@@ -12,7 +12,7 @@ use std::f64;
 /// # Examples
 ///
 /// ```
-///
+/// 
 /// use statrs::distribution::{Categorical, Discrete};
 /// use statrs::statistics::Distribution;
 /// use statrs::prec;
@@ -21,11 +21,11 @@ use std::f64;
 /// assert!(prec::almost_eq(n.mean().unwrap(), 5.0 / 3.0, 1e-15));
 /// assert_eq!(n.pmf(1), 1.0 / 3.0);
 /// ```
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Categorical {
     norm_pmf: Vec<f64>,
     cdf: Vec<f64>,
-    sf: Vec<f64>
+    sf: Vec<f64>,
 }
 
 impl Categorical {
@@ -74,6 +74,12 @@ impl Categorical {
 
     fn cdf_max(&self) -> f64 {
         *self.cdf.last().unwrap()
+    }
+}
+
+impl std::fmt::Display for Categorical {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Cat({:#?})", self.norm_pmf)
     }
 }
 
@@ -194,6 +200,7 @@ impl Distribution<f64> for Categorical {
                 .fold(0.0, |acc, (idx, &val)| acc + idx as f64 * val),
         )
     }
+
     /// Returns the variance of the categorical distribution
     ///
     /// # Formula
@@ -217,6 +224,7 @@ impl Distribution<f64> for Categorical {
             });
         Some(var)
     }
+
     /// Returns the entropy of the categorical distribution
     ///
     /// # Formula
@@ -294,7 +302,7 @@ pub fn prob_mass_to_cdf(prob_mass: &[f64]) -> Vec<f64> {
     cdf
 }
 
-/// Computes the sf from the given cumulative densities. 
+/// Computes the sf from the given cumulative densities.
 /// Performs no parameter or bounds checking.
 pub fn cdf_to_sf(cdf: &[f64]) -> Vec<f64> {
     let max = *cdf.last().unwrap();
@@ -342,13 +350,12 @@ fn test_binary_index() {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
     use crate::distribution::{Categorical, Discrete, DiscreteCDF};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(prob_mass: &[f64]) -> Categorical {
         let n = Categorical::new(prob_mass);

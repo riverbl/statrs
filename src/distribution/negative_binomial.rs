@@ -35,7 +35,7 @@ use std::f64;
 /// assert!(almost_eq(r.pmf(0), 0.0625, 1e-8));
 /// assert!(almost_eq(r.pmf(3), 0.15625, 1e-8));
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct NegativeBinomial {
     r: f64,
     p: f64,
@@ -101,6 +101,12 @@ impl NegativeBinomial {
     /// ```
     pub fn r(&self) -> f64 {
         self.r
+    }
+}
+
+impl std::fmt::Display for NegativeBinomial {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "NB({},{})", self.r, self.p)
     }
 }
 
@@ -188,6 +194,7 @@ impl DiscreteDistribution<f64> for NegativeBinomial {
     fn mean(&self) -> Option<f64> {
         Some(self.r * (1.0 - self.p) / self.p)
     }
+
     /// Returns the variance of the negative binomial distribution.
     ///
     /// # Formula
@@ -198,6 +205,7 @@ impl DiscreteDistribution<f64> for NegativeBinomial {
     fn variance(&self) -> Option<f64> {
         Some(self.r * (1.0 - self.p) / (self.p * self.p))
     }
+
     /// Returns the skewness of the negative binomial distribution.
     ///
     /// # Formula
@@ -281,13 +289,12 @@ impl Discrete<u64, f64> for NegativeBinomial {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
     use crate::distribution::{DiscreteCDF, Discrete, NegativeBinomial};
     use crate::distribution::internal::test;
-    use crate::consts::ACC;
 
     fn try_create(r: f64, p: f64) -> NegativeBinomial {
         let r = NegativeBinomial::new(r, p);
@@ -394,7 +401,7 @@ mod tests {
         let min = |x: NegativeBinomial| x.min();
         let max = |x: NegativeBinomial| x.max();
         test_case(1.0, 0.5, 0, min);
-        test_case(1.0, 0.3, std::u64::MAX, max);
+        test_case(1.0, 0.3, u64::MAX, max);
     }
 
     #[test]

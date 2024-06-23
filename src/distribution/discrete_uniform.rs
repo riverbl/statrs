@@ -17,7 +17,7 @@ use rand::Rng;
 /// assert_eq!(n.mean().unwrap(), 2.5);
 /// assert_eq!(n.pmf(3), 1.0 / 6.0);
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct DiscreteUniform {
     min: i64,
     max: i64,
@@ -48,6 +48,12 @@ impl DiscreteUniform {
         } else {
             Ok(DiscreteUniform { min, max })
         }
+    }
+}
+
+impl std::fmt::Display for DiscreteUniform {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Uni([{}, {}])", self.min, self.max)
     }
 }
 
@@ -84,7 +90,7 @@ impl DiscreteCDF<i64, f64> for DiscreteUniform {
     }
 
     fn sf(&self, x: i64) -> f64 {
-        //1. - self.cdf(x)
+        // 1. - self.cdf(x)
         if x < self.min {
             1.0
         } else if x >= self.max {
@@ -137,6 +143,7 @@ impl Distribution<f64> for DiscreteUniform {
     fn mean(&self) -> Option<f64> {
         Some((self.min + self.max) as f64 / 2.0)
     }
+
     /// Returns the variance of the discrete uniform distribution
     ///
     /// # Formula
@@ -148,6 +155,7 @@ impl Distribution<f64> for DiscreteUniform {
         let diff = (self.max - self.min) as f64;
         Some(((diff + 1.0) * (diff + 1.0) - 1.0) / 12.0)
     }
+
     /// Returns the entropy of the discrete uniform distribution
     ///
     /// # Formula
@@ -159,6 +167,7 @@ impl Distribution<f64> for DiscreteUniform {
         let diff = (self.max - self.min) as f64;
         Some((diff + 1.0).ln())
     }
+
     /// Returns the skewness of the discrete uniform distribution
     ///
     /// # Formula
@@ -245,12 +254,11 @@ impl Discrete<i64, f64> for DiscreteUniform {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
     use crate::distribution::{DiscreteCDF, Discrete, DiscreteUniform};
-    use crate::consts::ACC;
 
     fn try_create(min: i64, max: i64) -> DiscreteUniform {
         let n = DiscreteUniform::new(min, max);

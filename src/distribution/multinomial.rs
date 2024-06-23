@@ -90,6 +90,12 @@ impl Multinomial {
     }
 }
 
+impl std::fmt::Display for Multinomial {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Multinom({:#?},{})", self.p, self.n)
+    }
+}
+
 impl ::rand::distributions::Distribution<Vec<f64>> for Multinomial {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<f64> {
         let p_cdf = super::categorical::prob_mass_to_cdf(self.p());
@@ -244,7 +250,6 @@ impl<'a> Discrete<&'a [u64], f64> for Multinomial {
 // mod tests {
 //     use crate::statistics::*;
 //     use crate::distribution::{Discrete, Multinomial};
-//     use crate::consts::ACC;
 
 //     fn try_create(p: &[f64], n: u64) -> Multinomial {
 //         let dist = Multinomial::new(p, n);

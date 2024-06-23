@@ -19,7 +19,7 @@ use std::f64;
 /// assert_eq!(n.mean().unwrap(), 1.0);
 /// assert!(prec::almost_eq(n.pmf(1), 0.367879441171442, 1e-15));
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Poisson {
     lambda: f64,
 }
@@ -63,6 +63,12 @@ impl Poisson {
     /// ```
     pub fn lambda(&self) -> f64 {
         self.lambda
+    }
+}
+
+impl std::fmt::Display for Poisson {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Pois({})", self.lambda)
     }
 }
 
@@ -148,6 +154,7 @@ impl Distribution<f64> for Poisson {
     fn mean(&self) -> Option<f64> {
         Some(self.lambda)
     }
+
     /// Returns the variance of the poisson distribution
     ///
     /// # Formula
@@ -160,6 +167,7 @@ impl Distribution<f64> for Poisson {
     fn variance(&self) -> Option<f64> {
         Some(self.lambda)
     }
+
     /// Returns the entropy of the poisson distribution
     ///
     /// # Formula
@@ -177,6 +185,7 @@ impl Distribution<f64> for Poisson {
                 - 19.0 / (360.0 * self.lambda * self.lambda * self.lambda),
         )
     }
+
     /// Returns the skewness of the poisson distribution
     ///
     /// # Formula
@@ -293,13 +302,12 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, lambda: f64) -> f64 {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
     use crate::distribution::{DiscreteCDF, Discrete, Poisson};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(lambda: f64) -> Poisson {
         let n = Poisson::new(lambda);

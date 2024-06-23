@@ -14,7 +14,7 @@ use std::f64;
 ///
 /// ```
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Hypergeometric {
     population: u64,
     successes: u64,
@@ -110,6 +110,16 @@ impl Hypergeometric {
     }
 }
 
+impl std::fmt::Display for Hypergeometric {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Hypergeometric({},{},{})",
+            self.population, self.successes, self.draws
+        )
+    }
+}
+
 impl ::rand::distributions::Distribution<f64> for Hypergeometric {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         let mut population = self.population as f64;
@@ -193,7 +203,7 @@ impl DiscreteCDF<u64, f64> for Hypergeometric {
         } else {
             let k = x;
             let ln_denom = factorial::ln_binomial(self.population, self.draws);
-            (k + 1..self.max() + 1).fold(0.0, |acc, i| {
+            (k + 1..=self.max()).fold(0.0, |acc, i| {
                 acc + (factorial::ln_binomial(self.successes, i)
                     + factorial::ln_binomial(self.population - self.successes, self.draws - i)
                     - ln_denom)
@@ -258,6 +268,7 @@ impl Distribution<f64> for Hypergeometric {
             Some(self.successes as f64 * self.draws as f64 / self.population as f64)
         }
     }
+
     /// Returns the variance of the hypergeometric distribution
     ///
     /// # None
@@ -281,6 +292,7 @@ impl Distribution<f64> for Hypergeometric {
             Some(val)
         }
     }
+
     /// Returns the skewness of the hypergeometric distribution
     ///
     /// # None
@@ -364,13 +376,12 @@ impl Discrete<u64, f64> for Hypergeometric {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
     use crate::distribution::{DiscreteCDF, Discrete, Hypergeometric};
     use crate::distribution::internal::*;
-    use crate::consts::ACC;
 
     fn try_create(population: u64, successes: u64, draws: u64) -> Hypergeometric {
         let n = Hypergeometric::new(population, successes, draws);

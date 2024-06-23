@@ -20,7 +20,7 @@ use rand::Rng;
 /// assert_eq!(n.pmf(0), 0.5);
 /// assert_eq!(n.pmf(1), 0.5);
 /// ```
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Bernoulli {
     b: Binomial,
 }
@@ -80,6 +80,12 @@ impl Bernoulli {
     }
 }
 
+impl std::fmt::Display for Bernoulli {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Bernoulli({})", self.p())
+    }
+}
+
 impl ::rand::distributions::Distribution<f64> for Bernoulli {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         rng.gen_bool(self.p()) as u8 as f64
@@ -101,7 +107,7 @@ impl DiscreteCDF<u64, f64> for Bernoulli {
         self.b.cdf(x)
     }
 
-    /// Calculates the survival function for the 
+    /// Calculates the survival function for the
     /// bernoulli distribution at `x`.
     ///
     /// # Formula
@@ -158,6 +164,7 @@ impl Distribution<f64> for Bernoulli {
     fn mean(&self) -> Option<f64> {
         self.b.mean()
     }
+
     /// Returns the variance of the bernoulli
     /// distribution
     ///
@@ -169,6 +176,7 @@ impl Distribution<f64> for Bernoulli {
     fn variance(&self) -> Option<f64> {
         self.b.variance()
     }
+
     /// Returns the entropy of the bernoulli
     /// distribution
     ///
@@ -181,6 +189,7 @@ impl Distribution<f64> for Bernoulli {
     fn entropy(&self) -> Option<f64> {
         self.b.entropy()
     }
+
     /// Returns the skewness of the bernoulli
     /// distribution
     ///
@@ -254,7 +263,7 @@ impl Discrete<u64, f64> for Bernoulli {
 }
 
 #[rustfmt::skip]
-#[cfg(all(test, feature = "nightly"))]
+#[cfg(test)]
 mod testing {
     use std::fmt::Debug;
     use crate::distribution::DiscreteCDF;
